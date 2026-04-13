@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PvP Team Analyzer</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: sans-serif;
+        background: #f5f5f5;
+        display: flex;
+        justify-content: center;
+        padding: 2rem 1rem;
+        min-height: 100vh;
+      }
+      .wrap {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 1.5rem;
+      }
+      .league-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 1rem;
+      }
+      .league-btn {
+        flex: 1;
+        padding: 8px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f5f5f5;
+        color: #888;
+        cursor: pointer;
+        text-align: center;
+      }
+      .league-btn.active {
+        border-color: #378add;
+        background: #e6f1fb;
+        color: #0c447c;
+        font-weight: 600;
+      }
+      .preset {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 0.75rem;
+      }
+      .preset button {
+        background: none;
+        border: none;
+        color: #378add;
+        font-size: 12px;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 1.25rem;
+      }
+      .slot {
+        background: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .slot label {
+        font-size: 12px;
+        color: #888;
+      }
+      .slot input {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 14px;
+        width: 100%;
+      }
+      .btn {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+      }
+      .btn:hover {
+        background: #f5f5f5;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .result {
+        margin-top: 1.5rem;
+        background: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 1.25rem;
+        font-size: 14px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        display: none;
+      }
+      .loading {
+        color: #888;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>PvP Team Analyzer</h1>
+      <p class="sub">
+        Masukkan 3 Pokémon kamu dan pilih liga untuk analisis AI.
+      </p>
+
+      <div class="league-row">
+        <div
+          class="league-btn active"
+          id="gl"
+          onclick="setLeague('Great League', 'gl')"
+        >
+          Great League
+        </div>
+        <div
+          class="league-btn"
+          id="ul"
+          onclick="setLeague('Ultra League', 'ul')"
+        >
+          Ultra League
+        </div>
+        <div
+          class="league-btn"
+          id="ml"
+          onclick="setLeague('Master League', 'ml')"
+        >
+          Master League
+        </div>
+      </div>
+
+      <p class="preset">
+        Coba preset:
+        <button onclick="fillPreset()">Clodsire / Medicham / Azumarill</button>
+      </p>
+
+      <div class="grid">
+        <div class="slot">
+          <label>Pokémon 1</label><input id="p1" placeholder="e.g. Clodsire" />
+        </div>
+        <div class="slot">
+          <label>Pokémon 2</label><input id="p2" placeholder="e.g. Medicham" />
+        </div>
+        <div class="slot">
+          <label>Pokémon 3</label><input id="p3" placeholder="e.g. Azumarill" />
+        </div>
+      </div>
+
+      <button class="btn" id="analyzeBtn" onclick="analyze()">
+        Analyze my team ↗
+      </button>
+      <div class="result" id="result"></div>
+    </div>
+
+    <script>
+      let selectedLeague = 'Great League';
+
+      function setLeague(name, id) {
+        selectedLeague = name;
+        ['gl', 'ul', 'ml'].forEach((l) => {
+          document.getElementById(l).className =
+            'league-btn' + (l === id ? ' active' : '');
+        });
+      }
+
+      function fillPreset() {
+        document.getElementById('p1').value = 'Clodsire';
+        document.getElementById('p2').value = 'Medicham';
+        document.getElementById('p3').value = 'Azumarill';
+      }
+
+      async function analyze() {
+        const p1 = document.getElementById('p1').value.trim();
+        const p2 = document.getElementById('p2').value.trim();
+        const p3 = document.getElementById('p3').value.trim();
+        const names = [p1, p2, p3].filter(Boolean).join(', ');
+        if (!names) {
+          alert('Masukkan minimal 1 Pokémon!');
+          return;
+        }
+
+        const btn = document.getElementById('analyzeBtn');
+        const result = document.getElementById('result');
+        btn.disabled = true;
+        result.style.display = 'block';
+        result.textContent = 'Menganalisis tim kamu...';
+
+        const prompt = `You are an expert Pokémon GO PvP Battle League analyst. Analyze this team for ${selectedLeague}:
+Team: ${names}
+Give a concise analysis covering:
+1. Team role breakdown — briefly describe each Pokémon's role (lead/safe switch/closer)
+2. Type coverage — strengths and what types they cover together
+3. Weaknesses — shared vulnerabilities or threats to watch for
+4. Suggested moves — one key move recommendation per Pokémon (fast + charge)
+5. Overall verdict — 1-2 sentences on team synergy and rating (e.g. 7/10)
+Keep it practical and Pokémon GO specific. Use plain text, no markdown.`;
+
+        try {
+          const res = await fetch('/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt }),
+          });
+          const data = await res.json();
+          result.textContent = data.text;
+        } catch (e) {
+          result.textContent = 'Error. Coba lagi ya.';
+        } finally {
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
